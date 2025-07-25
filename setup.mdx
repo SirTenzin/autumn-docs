@@ -13,6 +13,8 @@ We're going to have:
 
 ## 1. Create your products
 
+Create a product for each plan that your app offers. In our example we'll create a "Free" and "Pro" product.
+
 <Tabs>
 <Tab title="Using the CLI">
 
@@ -25,15 +27,23 @@ npx atmn init
 This will create a `autumn.config.ts` file in your root directory and prompt you to login / create an account. Add the following code to your `autumn.config.ts` file.
 
 ```typescript autumn.config.ts [expandable]
-import { product, feature, featureItem, priceItem } from "atmn";
+import {
+  feature,
+  product,
+  featureItem,
+  pricedFeatureItem,
+  priceItem,
+} from "atmn";
 
-const messages = feature({
+// Features
+export const messages = feature({
   id: "messages",
   name: "Messages",
   type: "single_use",
 });
 
-const freePlan = product({
+// Products
+export const free = product({
   id: "free",
   name: "Free",
   items: [
@@ -46,28 +56,23 @@ const freePlan = product({
   ],
 });
 
-const proPlan = product({
+export const pro = product({
   id: "pro",
   name: "Pro",
   items: [
+    // 100 messages per month
     featureItem({
-      // 10 messages per month
       feature_id: messages.id,
-      included_usage: 10,
+      included_usage: 100,
       interval: "month",
     }),
+    // $20 per month
     priceItem({
-      // $20 per month
       price: 20,
       interval: "month",
     }),
   ],
 });
-
-export default {
-  products: [freePlan, proPlan],
-  features: [messages],
-};
 ```
 
 Then, push your changes to Autumn's sandbox environment.
@@ -76,50 +81,107 @@ Then, push your changes to Autumn's sandbox environment.
 npx atmn push
 ```
 
+<Tip>
+  If you already have products created in the dashboard, run `npx atmn pull` to
+  pull them into your local config.
+</Tip>
+
 </Tab>
 <Tab title="Dashboard">
-Create the Pro plan in the [Products](https://app.useautumn.com/products) tab.
+Create the Free and Pro plans in the [Products](https://app.useautumn.com/products) tab.
 <AccordionGroup>
 
-  <Accordion title="Create the Product">
-    Click on the "+ Product" button and name the product "Pro".
-    <Frame className="bg-transparent items-center gap-4 bg-gray-50 dark:bg-gray-800">
+  <Accordion title="Free Product">
+    Click on the **+ Product** button and name the product "Free". 
+    
+    Toggle on the **Default** switch so that it is enabled for customers automatically when they're created.
+    <Frame>
       <img
-        src="/assets/quickstart/create-pro.png"
+        src="/assets/quickstart/create-free.png"
+
+      />
+    </Frame>
+
+    Click on the **+ Feature** button and create a single-use "Messages" feature.
+
+    <Frame>
+      <img
+        src="/assets/quickstart/create-feature.png"
+
+      />
+    </Frame>
+
+    Add a limit of 5 messages per month.
+
+    <Frame>
+      <img
+        src="/assets/quickstart/free-messages.png"
+
+      />
+    </Frame>
+
+    Click on the **Add Item** button, then on the **Create Product** button.
+
+    <Frame>
+      <img
+        src="/assets/quickstart/free-product.png"
 
       />
     </Frame>
 
   </Accordion>
 
-  <Accordion title="Create the Messages Feature">
-  Click the "+ Feature" button, and in the feature list, select "Create new feature".
+  <Accordion title="Pro Product">
+  Back on the products page, click on the **+ Product** button and name it "Pro".
 
-{" "}
+  <Frame>
+    <img
+      src="/assets/quickstart/create-pro.png"
 
-<Frame className="bg-transparent items-center gap-4 bg-gray-50 dark:bg-gray-800">
-  <img src="/assets/quickstart/messages.png" />
-</Frame>
+    />
 
-  </Accordion>
-
-  <Accordion title="Add the Product Items">
-  Back on the products page, create a new product and name it "Pro". Click "+ Feature" and add a limit of 10 messages per month.
-
-Then click "+ Price" and a price of $20 per month.
-
-  <Frame className="bg-transparent items-center gap-4 bg-gray-50 dark:bg-gray-800">
-  <img src="/assets/quickstart/messages-item.png" className="" />
-  <img src="/assets/quickstart/price.png" className="" />
   </Frame>
+
+Click on the **+ Feature** button and select the "Messages" feature that we created for the Free product.
+
+Add a limit of 100 messages per month.
+
+  <Frame>
+    <img
+      src="/assets/quickstart/pro-messages.png"
+
+    />
+
+  </Frame>
+
+Click on the **+ Price** button and add a price of $20 per month.
+
+  <Frame>
+    <img
+      src="/assets/quickstart/pro-price.png"
+
+    />
+
+  </Frame>
+
+Click on the **Create Product** button.
+
+  <Frame>
+    <img
+      src="/assets/quickstart/pro-product.png"
+
+    />
+
+  </Frame>
+
   </Accordion>
 </AccordionGroup>
 </Tab>
 </Tabs>
 
-## 2. Install `autumn-js`
+## 2. Setup Autumn
 
-To add the Pro plan to your app, first install the Autumn library.
+#### Install `autumn-js`
 
 <CodeGroup>
 
@@ -146,7 +208,7 @@ bun add autumn-js
   library in both.
 </Note>
 
-## 3. Add your Autumn secret key
+#### Add your Autumn secret key
 
 Create an [Autumn Secret API key](https://app.useautumn.com/dev) from the dashboard, and add it to your backend `.env` file.
 
@@ -154,7 +216,7 @@ Create an [Autumn Secret API key](https://app.useautumn.com/dev) from the dashbo
 AUTUMN_SECRET_KEY=am_sk_1234567890
 ```
 
-## 4. Mount the Autumn handler
+#### Add Server-Side Route
 
 Server-side, mount the handler. This will create routes in the `/api/autumn/*` path, which will be called by Autumn's frontend React [library](/api-reference/hooks/useCustomer). These routes in turn call Autumn's API.
 
@@ -298,6 +360,45 @@ app.use(
 );
 ```
 
+```typescript Convex
+//convex/http.ts
+
+import { httpRouter } from "convex/server";
+import { httpAction } from "./_generated/server";
+import { autumnHandler } from "autumn-js/convex";
+import { ROUTABLE_HTTP_METHODS } from "convex/server";
+
+const http = httpRouter();
+const handler = autumnHandler({
+  httpAction,
+  identify: async () => {
+    // get the user from your auth provider (example: better-auth)
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    return {
+      customerId: session?.user.id,
+      customerData: {
+        name: session?.user.name,
+        email: session?.user.email,
+      },
+    };
+  },
+});
+
+for (const method of ROUTABLE_HTTP_METHODS) {
+  http.route({
+    pathPrefix: "/api/autumn/",
+    method,
+    handler,
+  });
+}
+
+// Convex expects the router to be the default export of `convex/http.js`.
+export default http;
+```
+
 ```typescript Fastify
 //index.ts
 
@@ -375,7 +476,7 @@ Deno.serve(async (req: Request) => {
   Autumn will automatically create a customer if the customer ID is new.
 </Check>
 
-## 5. Set up `<AutumnProvider />`
+#### Add Client-Side Provider
 
 Client side, wrap your application with the `<AutumnProvider>` component, and pass in your backend URL. This lets Autumn know how to reach the backend handler you mounted in the previous step.
 
@@ -440,17 +541,20 @@ export default function RootLayout({
 </CodeGroup>
 
 <Info>
-  `AutumnProvider` can also take in a `getBearerToken` function, which should be used
+  `The Provider component can also take in a `getBearerToken` function, which should be used
   for auth frameworks with separate backend and frontend, eg using Clerk with
-  Express.
+  Express. This will pass in the `Authorization` header from the request to the
+  backend, which can be used in the `autumnHandler` identify function.
 
 </Info>
 
-## 6. Enable Payments
+## 3. Enable Stripe Payments
 
-Call `attach` to redirect the customer to a Stripe checkout page when they want to purchase the Pro plan. Once they've paid, Autumn will grant them access to the features we defined.
+Call `checkout` to redirect the customer to a Stripe checkout page when they want to purchase the Pro plan. Once they've paid, Autumn will grant them access to the features we defined.
 
-If their payment method is already on file, `AttachDialog` will open instead to let the customer confirm their new subscription or purchase, then handle the payment.
+If their payment method is already on file, `CheckoutDialog` will open instead to let the customer confirm their new subscription or purchase, then handle the payment.
+
+Alternatively, use our [PricingTable](/quickstart/shadcn#pricing-table) component to show a pricing table that handles the checkout for you.
 
 <Warning>
   Make sure you've pasted in your [Stripe test secret
@@ -458,18 +562,18 @@ If their payment method is already on file, `AttachDialog` will open instead to 
   dashboard](https://app.useautumn.com/integrations/stripe).
 </Warning>
 
-```jsx React {9}
-import { useCustomer, AttachDialog } from "autumn-js/react";
+```jsx React
+import { useCustomer, CheckoutDialog } from "autumn-js/react";
 
 export default function PurchaseButton() {
-  const { attach } = useCustomer();
+  const { checkout } = useCustomer();
 
   return (
     <button
       onClick={async () => {
-        await attach({
+        await checkout({
           productId: "pro",
-          dialog: AttachDialog,
+          dialog: CheckoutDialog,
         });
       }}
     >
@@ -479,27 +583,29 @@ export default function PurchaseButton() {
 }
 ```
 
-## 7. Handle Pricing Logic
+## 4. Handle Pricing Logic
 
 There are 3 key functions you need to handle the billing logic once the customer has purchased the Pro plan:
 
-- `check` to see if the customer is `allowed` to send a message.
+- `check` for feature access to see if the customer is allowed to send a message.
 - `track` a usage event in Autumn (typically done server-side)
 - `customer` to display usage data in the UI.
 
-<CodeGroup>
+#### Client-side
 
-```jsx Client
+```jsx send-message.tsx
 import { useCustomer } from "autumn-js/react";
 
 export default function SendChatMessage() {
-  const { customer, allowed, refetch } = useCustomer();
+  const { customer, check, refetch } = useCustomer();
 
   return (
     <>
       <button
         onClick={async () => {
-          if (allowed({ featureId: "messages" })) {
+          const { data } = await check({ featureId: "messages" });
+
+          if (data?.allowed) {
             //... send chatbot message server-side, then
             await refetch(); // refetch customer usage data
             alert(
@@ -517,16 +623,20 @@ export default function SendChatMessage() {
 }
 ```
 
-```typescript Server
+#### Server-side
+
+You should handle feature access checks on the backend too for security.
+
+```typescript send-message.ts
 import { Autumn as autumn } from "autumn-js";
 
-//optionally check on the backend if the customer can send a message
 const { data } = await autumn.check({
-  customer_id: "user_123", // same internal user id as in the autumn handler
+  customer_id: "user_123", // same user id from auth as in the autumn handler
   feature_id: "messages",
 });
 
-// server-side function to send the message... then track the usage
+// server-side function to send the message
+//then record the usage
 
 await autumn.track({
   customer_id: "user_123",
@@ -534,8 +644,6 @@ await autumn.track({
 });
 ```
 
-</CodeGroup>
-
-## 8. Next steps
+## 5. Next steps
 
 Nice! You've now integrated Autumn into your application. Next, learn how to use Autumn's [components](/quickstart/shadcn) to show a pricing table, and handle upgrades, downgrades and paywalls.
