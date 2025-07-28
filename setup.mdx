@@ -1,22 +1,20 @@
 ---
 title: "Integration Guide"
-sidebarTitle: "Integration"
+sidebarTitle: "React & Node.js"
 description: "Implement your app's payments and pricing model in under 5 minutes"
 ---
 
-Create your [Autumn account](https://app.useautumn.com/) and let's create the pricing for a premium AI chatbot.
+In this example we'll create the pricing for a premium AI chatbot. We're going to have:
 
-We're going to have:
-
-- A Free plan that gives users **5 chat messages per month** for free
-- A Pro plan that gives users **100 chat messages per month** for **$20 per month**.
+- A Free plan that gives users 5 chat messages per month for free
+- A Pro plan that gives users 100 chat messages per month for $20 per month.
 
 ## 1. Create your products
 
 Create a product for each plan that your app offers. In our example we'll create a "Free" and "Pro" product.
 
 <Tabs>
-<Tab title="Using the CLI">
+<Tab title="CLI">
 
 Run the following command in your root directory:
 
@@ -24,7 +22,7 @@ Run the following command in your root directory:
 npx atmn init
 ```
 
-This will create a `autumn.config.ts` file in your root directory and prompt you to login / create an account. Add the following code to your `autumn.config.ts` file.
+This will prompt you to login or create an account, and create an `autumn.config.ts` file. Paste in the code below, or view our [config schema](/api-reference/cli/config) to build your own.
 
 ```typescript autumn.config.ts [expandable]
 import {
@@ -88,7 +86,7 @@ npx atmn push
 
 </Tab>
 <Tab title="Dashboard">
-Create the Free and Pro plans in the [Products](https://app.useautumn.com/products) tab.
+Create your [Autumn account](https://app.useautumn.com/), and the Free and Pro plans in the [Products](https://app.useautumn.com/products) tab.
 <AccordionGroup>
 
   <Accordion title="Free Product">
@@ -181,7 +179,7 @@ Click on the **Create Product** button.
 
 ## 2. Setup Autumn
 
-#### Install `autumn-js`
+Install `autumn-js`
 
 <CodeGroup>
 
@@ -208,19 +206,17 @@ bun add autumn-js
   library in both.
 </Note>
 
-#### Add your Autumn secret key
-
-Create an [Autumn Secret API key](https://app.useautumn.com/dev) from the dashboard, and add it to your backend `.env` file.
+Then create an [Autumn Secret API key](https://app.useautumn.com/dev) from the dashboard, and add it to your backend `.env` file. If you're using the CLI this should already be done for you.
 
 ```bash .env
 AUTUMN_SECRET_KEY=am_sk_1234567890
 ```
 
-#### Add Server-Side Route
+#### Add Endpoints Server-Side
 
-Server-side, mount the handler. This will create routes in the `/api/autumn/*` path, which will be called by Autumn's frontend React [library](/api-reference/hooks/useCustomer). These routes in turn call Autumn's API.
+Server-side, mount the Autumn handler. This will create endpoints in the `/api/autumn/*` path, which will be called by Autumn's frontend React [library](/api-reference/hooks/useCustomer). These endpoints in turn call Autumn's API.
 
-The handler takes in an `identify` function that should return a `customerId`. This is typically your internal user ID or organization ID from your auth provider.
+The handler takes in an `identify` function where you should pass in the user ID or organization ID from your auth provider.
 
 <CodeGroup>
 
@@ -238,7 +234,7 @@ export const { GET, POST } = autumnHandler({
     });
 
     return {
-      customerId: session?.user.id,
+      customerId: session?.user.id, //or org ID
       customerData: {
         name: session?.user.name,
         email: session?.user.email,
@@ -338,7 +334,9 @@ app.use(
 
 import { autumnHandler } from "autumn-js/express";
 
-app.use(express.json()); // need to parse request body before autumnHandler
+// You need to parse request body BEFORE autumnHandler
+app.use(express.json());
+
 app.use(
   "/api/autumn",
   autumnHandler({
@@ -428,6 +426,7 @@ fastify.route({
 
 ```typescript Supabase
 //supabase/functions/autumn/index.ts
+//You will need to use the getBearerToken function in the AutumnProvider if you're using SupabaseAuth
 
 import { autumnHandler } from "npm:autumn-js/supabase";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.9";
@@ -476,13 +475,17 @@ Deno.serve(async (req: Request) => {
   Autumn will automatically create a customer if the customer ID is new.
 </Check>
 
-#### Add Client-Side Provider
+#### Add Provider Client-Side
 
-Client side, wrap your application with the `<AutumnProvider>` component, and pass in your backend URL. This lets Autumn know how to reach the backend handler you mounted in the previous step.
+Client side, wrap your application with the `<AutumnProvider>` component.
 
-<Note>
-  If you're using a fullstack framework like Next.js, your backend URL will be
-  the same as your frontend URL (eg http://localhost:3000).
+If your backend is hosted on a separate URL (eg, when using Vite), pass it into the `backendUrl` prop.
+
+{/* prettier-ignore */}
+{/* <Note>
+If you're using a fullstack framework like Next.js, your backend URL will be
+the same as your frontend URL (eg http://localhost:3000).
+
 </Note>
 
 <CodeGroup>
@@ -495,10 +498,11 @@ NEXT_PUBLIC_AUTUMN_BACKEND_URL=http://localhost:3000
 VITE_AUTUMN_BACKEND_URL=http://localhost:8000
 ```
 
-</CodeGroup>
+</CodeGroup> */}
 
 <CodeGroup>
 ```jsx Next.js
+//layout.tsx
 import { AutumnProvider } from "autumn-js/react";
 
 export default function RootLayout({
@@ -509,7 +513,7 @@ export default function RootLayout({
   return (
     <html>
       <body>
-        <AutumnProvider backendUrl={process.env.NEXT_PUBLIC_AUTUMN_BACKEND_URL}>
+        <AutumnProvider>
           {children}
         </AutumnProvider>
       </body>
@@ -519,6 +523,10 @@ export default function RootLayout({
 ```
 
 ```jsx Vite
+//.env
+VITE_AUTUMN_BACKEND_URL=http://localhost:8000
+
+//page.tsx
 import { AutumnProvider } from "autumn-js/react";
 
 export default function RootLayout({
@@ -541,26 +549,30 @@ export default function RootLayout({
 </CodeGroup>
 
 <Info>
-  `The Provider component can also take in a `getBearerToken` function, which should be used
+  The Provider component can also take in a `getBearerToken` function, which should be used
   for auth frameworks with separate backend and frontend, eg using Clerk with
-  Express. This will pass in the `Authorization` header from the request to the
+  Express. 
+  
+  This will pass the auth token in the `Authorization` header from the request to the
   backend, which can be used in the `autumnHandler` identify function.
 
 </Info>
 
-## 3. Enable Stripe Payments
+<Note>
+  CORS issues? Please [reach out](https://discord.gg/STqxY92zuS) and we'll help
+  you ASAP.
+</Note>
+
+## 3. Stripe Payments
 
 Call `checkout` to redirect the customer to a Stripe checkout page when they want to purchase the Pro plan. Once they've paid, Autumn will grant them access to the features we defined.
 
-If their payment method is already on file, `CheckoutDialog` will open instead to let the customer confirm their new subscription or purchase, then handle the payment.
+If their payment details are already on file, [`CheckoutDialog`](/quickstart/shadcn#checkout-dialog) will open instead to let the customer confirm their upgrade, downgrade or new purchase, then handle the payment.
 
-Alternatively, use our [PricingTable](/quickstart/shadcn#pricing-table) component to show a pricing table that handles the checkout for you.
-
-<Warning>
-  Make sure you've pasted in your [Stripe test secret
-  key](https://dashboard.stripe.com/test/apikeys) `sk_test_...` in the [Autumn
-  dashboard](https://app.useautumn.com/integrations/stripe).
-</Warning>
+<Tip>
+  You can alternatively use our [PricingTable](/quickstart/shadcn#pricing-table)
+  component, or [roll your own](/quickstart/billing-flows) flows using our SDK.
+</Tip>
 
 ```jsx React
 import { useCustomer, CheckoutDialog } from "autumn-js/react";
@@ -583,15 +595,25 @@ export default function PurchaseButton() {
 }
 ```
 
-## 4. Handle Pricing Logic
+<Warning>
+  Make sure you've pasted in your [Stripe test secret
+  key](https://dashboard.stripe.com/test/apikeys) `sk_test_...` in the [Autumn
+  dashboard](https://app.useautumn.com/integrations/stripe).
+</Warning>
+
+## 4. Build Pricing Logic
 
 There are 3 key functions you need to handle the billing logic once the customer has purchased the Pro plan:
 
 - `check` for feature access to see if the customer is allowed to send a message.
-- `track` a usage event in Autumn (typically done server-side)
+- `track` a usage event in Autumn
 - `customer` to display usage data in the UI.
 
 #### Client-side
+
+The `customer` object is a single state that contains all the billing data for your user (subscription states, feature permissions, usage balances, etc).
+
+Use the client-side `check` function to gate features and show paywalls. This is determined by reading the local `customer` state, so no API call is made.
 
 ```jsx send-message.tsx
 import { useCustomer } from "autumn-js/react";
@@ -626,7 +648,7 @@ export default function SendChatMessage() {
 
 #### Server-side
 
-You should handle feature access checks on the backend too for security.
+You should handle feature access checks on the backend too for security. The server-side `check` function makes an API call to Autumn's DB to fetch the latest information.
 
 ```typescript send-message.ts
 import { Autumn as autumn } from "autumn-js";
@@ -637,7 +659,7 @@ const { data } = await autumn.check({
 });
 
 // server-side function to send the message
-//then record the usage
+// then record the usage in Autumn
 
 await autumn.track({
   customer_id: "user_123",
@@ -645,6 +667,12 @@ await autumn.track({
 });
 ```
 
-## 5. Next steps
+**Congrats 🎉**
 
-Nice! You've now integrated Autumn into your application. Next, learn how to use Autumn's [components](/quickstart/shadcn) to show a pricing table, and handle upgrades, downgrades and paywalls.
+Nice! You've now integrated Autumn into your application. You can make pricing changes through the dashboard/CLI and it'll automatically update in your app.
+
+Next steps:
+
+- Add Stripe's [billing portal](/api-reference/hooks/useCustomer#openbillingportal)
+- Handle failed payments
+- Use our UI [components](/quickstart/shadcn) to show a pricing table, and handle upgrades, downgrades and paywalls.

@@ -15,22 +15,24 @@
   "navigation": {
     "anchors": [
       {
-        "anchor": "Documentation",
+        "anchor": "Docs",
         "icon": "folder-open",
         "groups": [
           {
             "group": " ",
-            "pages": ["introduction", "understanding"]
+            "pages": ["welcome"]
           },
           {
-            "group": "Get Started",
+            "group": "Setup",
             "pages": [
-              "setup",
+              {
+                "group": "Integration",
+                "pages": ["setup", "setup/backend", "setup/ai-builders"]
+              },
               {
                 "group": "Components",
-                "pages": ["quickstart/shadcn", "quickstart/billing-flows"]
-              },
-              "cookbooks/ai-builders"
+                "pages": ["setup/shadcn", "setup/billing-flows"]
+              }
             ]
           },
           {
@@ -78,6 +80,10 @@
             ]
           },
           {
+            "group": "CLI",
+            "pages": ["api-reference/cli/config"]
+          },
+          {
             "group": "Core",
             "pages": [
               "api-reference/attach",
@@ -114,16 +120,6 @@
             ]
           }
         ]
-      },
-      {
-        "anchor": "Community",
-        "icon": "discord",
-        "href": "https://discord.gg/STqxY92zuS"
-      },
-      {
-        "anchor": "GitHub",
-        "icon": "github",
-        "href": "https://github.com/useautumn/autumn"
       }
     ]
   },
@@ -147,6 +143,16 @@
   },
   "navbar": {
     "links": [
+      {
+        "label": "Discord",
+        "icon": "discord",
+        "href": "https://discord.gg/STqxY92zuS"
+      },
+      {
+        "label": "GitHub",
+        "icon": "github",
+        "href": "https://github.com/useautumn/autumn"
+      },
       {
         "label": "Website",
         "href": "https://useautumn.com"

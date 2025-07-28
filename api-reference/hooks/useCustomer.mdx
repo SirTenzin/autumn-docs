@@ -1,5 +1,5 @@
 ---
-title: "useCustomer()"
+title: "useCustomer"
 description: "Access a customer's state and use it to display information in your React app"
 ---
 
@@ -16,7 +16,7 @@ The `useCustomer` hook provides access to customer data and related operations. 
 
 <ParamField body="expand" type="string[]">
   Array of additional data to include in the customer response. Options may
-  include `invoices`, `trials_used` or `rewards`.
+  include `invoices`, `entities`, `trials_used`, `rewards`, `referral`.
 </ParamField>
 
 ## `customer`
@@ -40,28 +40,28 @@ export default function CustomerProfile() {
 }
 ```
 
-## `attach()`
+## `checkout()`
 
-Opens a checkout URL for the user to make a payment. If the payment method already exists, a payment confirmation dialog (AttachDialog) will be opened.
+Opens a checkout URL for the user to make a payment.
 
-You can override the default dialog by passing in a `dialog` prop, or disable it by passing in `disableDialog: true` into `<AutumnProvider />`.
+If the payment method already exists, purchase confirmation data will be returned.
 
-<Tip>
-  Check out the [billing flows](/quickstart/billing-flows) page to see how to
-  handle upgrade/downgrade confirmation flows.
-</Tip>
+If a `dialog` is passed in, a payment confirmation dialog ([`CheckoutDialog`](/quickstart/shadcn#checkout-dialog)) will be opened.
 
 ```jsx
 import { useCustomer } from "autumn-js/react";
+import CheckoutDialog from "@/components/autumn/checkout-dialog";
+// or import { CheckoutDialog } from "autumn-js/react";
 
 export default function PurchaseButton() {
-  const { attach } = useCustomer();
+  const { checkout } = useCustomer();
 
   return (
     <button
       onClick={async () => {
-        await attach({
+        await checkout({
           productId: "pro",
+          dialog: CheckoutDialog,
         });
       }}
     >
@@ -74,11 +74,85 @@ export default function PurchaseButton() {
 **Parameters**
 
 <ParamField body="productId" type="string" required>
-  The ID of the product to attach.
+  The ID of the product being enabled.
 </ParamField>
 <ParamField body="dialog" type="(data: any) => JSX.Element | React.ReactNode">
   A dialog that pops up to confirm the purchase (eg, for upgrades/downgrades).
   See the [billing flows](/quickstart/billing-flows#usage) page.
+</ParamField>
+
+<ParamField body="entityId" type="string">
+  The ID of the entity (eg, user seat) to attach the product to.
+</ParamField>
+
+<ParamField body="options" type="AttachFeatureOptions[]">
+  Array of feature options to configure for the attachment. Each option contains
+  `featureId` (string) and `quantity` (number).
+</ParamField>
+
+<ParamField body="productIds" type="string[]">
+  Array of additional product IDs to attach simultaneously.
+</ParamField>
+
+<ParamField body="freeTrial" type="boolean">
+  Whether to disable free trials for this product. Only applicable if the
+  product has a free trial.
+</ParamField>
+
+<ParamField body="successUrl" type="string">
+  URL to redirect to after successful attachment/checkout.
+</ParamField>
+
+<ParamField body="metadata" type="Record<string, string>">
+  Additional metadata to pass onto Stripe.
+</ParamField>
+
+<ParamField body="checkoutSessionParams" type="object">
+  Pass in Stripe checkout session fields and they will be forwarded on.
+</ParamField>
+
+<ParamField body="forceCheckout" type="boolean">
+  Whether to force the checkout flow even if the payment method already exists.
+  Not available for upgrades/downgrades.
+</ParamField>
+
+<ParamField body="openInNewTab" type="boolean" default="false">
+  Whether to open the checkout URL in a new tab.
+</ParamField>
+
+## `attach()`
+
+Enables a product for a customer and handles a payment. Typically used after the `checkout` function.
+
+If the payment method is not on file, this function will also return a Checkout URL.
+
+```jsx
+import { useCustomer } from "autumn-js/react";
+
+export default function ConfirmationButton() {
+  const { attach } = useCustomer();
+
+  return (
+    <div>
+      Click to confirm your upgrade. Your card will be charged.
+      <button
+        onClick={async () => {
+          await attach({
+            productId: "ultra",
+          });
+        }}
+      >
+        Confirm Purchase
+      </button>
+    </div>
+  );
+}
+```
+
+**Parameters**
+
+<ParamField body="productId" type="string" required>
+  The ID of the product to attach.
 </ParamField>
 
 <ParamField body="entityId" type="string">
@@ -116,33 +190,15 @@ export default function PurchaseButton() {
   Whether to open the checkout URL in a new tab.
 </ParamField>
 
-## `allowed`
-
-Check if a user has access to a specific feature or product. This will be read from the `customer` state object on the frontend (so no API call is made).
-
-```jsx
-import { useCustomer } from "autumn-js/react";
-
-export default function FeatureGate({ children }) {
-  const { allowed } = useCustomer();
-
-  return <div>{allowed({ featureId: "analytics" }) ? children : null}</div>;
-}
-```
-
-**Parameters**
-
-<ParamField body="featureId" type="string">
-  The ID of the feature to check access for.
-</ParamField>
-
-<ParamField body="productId" type="string">
-  The ID of the product to check access for.
-</ParamField>
-
 ## `check()`
 
-Check if a user has access to a specific feature or product. This will make an API call to Autumn to check access. You can use this to always get the most up-to-date usage data.
+Check if a user has access to a specific feature or product.
+
+<Note>
+  This will be read from the local `customer` state object, so no API call to
+  Autumn is made. This should be combined with a backend `check` call for
+  security.
+</Note>
 
 ```jsx
 import { useCustomer } from "autumn-js/react";
@@ -200,7 +256,12 @@ export default function FeatureGate({ children }) {
 
 ## `track()`
 
-Track usage events for features or custom analytics.
+Track usage events for features or analytics.
+
+<Warning>
+  Tracking usage client-side is not recommended, as a user in theory could stop
+  script execution and mess with your tracking data.
+</Warning>
 
 ```jsx
 import { useCustomer } from "autumn-js/react";
@@ -260,7 +321,7 @@ export default function BillingSettings() {
     <button
       onClick={async () => {
         await openBillingPortal({
-          returnUrl: "/settings/billing",
+          returnUrl: "https://useautumn.com/settings/billing",
         });
       }}
     >
