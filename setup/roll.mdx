@@ -1,0 +1,464 @@
+---
+title: "Roll your own billing UI"
+sidebarTitle: "Roll Your Own"
+description: "Use Autumn's API or SDK to roll your own pricing table, upgrade/downgrade flows, and paywalls"
+---
+
+Autumn gives you the data to handle your billing flows, which will automatically update when you make pricing changes.
+
+This page covers how to roll your own billing flows using our API or SDK. Alternatively, you can use our customizable [shadcn/ui components](/quickstart/shadcn) to handle these out-of-the-box.
+
+## Pricing Table
+
+Display a list of the products you offer by fetching your product data from Autumn's API. This gives you a dynamic, single source of truth for your app's pricing plans.
+
+<CodeGroup>
+
+```tsx React
+import { useCustomer, usePricingTable } from "autumn-js/react";
+
+const { products, isLoading, error } = usePricingTable();
+```
+
+```typescript Node.js
+import { Autumn as autumn } from "autumn-js";
+
+const { data, error } = await autumn.products({
+  customer_id: "user_123",
+});
+```
+
+</CodeGroup>
+
+Each product in the array returned will contain a `scenario` enum, that can be used to determine its relation to the user's currenct product.
+
+This can be used to control the button text of each pricing card you display. See our [shadcn/ui pricing table](/setup/shadcn#scenarios) texts for an example.
+
+| Scenario    | Description                                                                      |
+| ----------- | -------------------------------------------------------------------------------- |
+| `upgrade`   | The product is an upgrade to the user's current product                          |
+| `downgrade` | The product is a downgrade to the user's current product                         |
+| `cancel`    | The product is a free product which would cancel the user's current subscription |
+| `renew`     | The product would be a renewal of a product that's scheduled to downgrade        |
+| `scheduled` | The product is already scheduled to start at a future date (eg, for downgrades)  |
+| `active`    | The product is already active                                                    |
+
+## Upgrades, Downgrades and Payment Confirmation
+
+Typically when charging a customer's card, you'll want to display the payment information beforehand for the user to confirm. This is useful for upgrade, downgrade and add-on payment flows.
+
+The `checkout` function will return the data your customer will want to see, such as price information, billing cycle, etc.
+
+<Check>
+  If the customer's payment details aren't on file (eg, its a new payment),
+  `checkout` will return a payment URL.
+</Check>
+
+<CodeGroup>
+
+```typescript React
+import { useCustomer } from "autumn-js/react";
+
+const { checkout } = useCustomer();
+
+const { data, error } = await checkout({
+  productId: "pro",
+});
+```
+
+```typescript Node.js
+import { Autumn as autumn } from "autumn-js";
+
+const { data, error } = await autumn.checkout({
+  customer_id: "user_123",
+  product_id: "pro",
+});
+```
+
+```python Python
+import asyncio
+from autumn import Autumn
+
+autumn = Autumn("am_sk_1234567890")
+
+async def main():
+  response = await autumn.checkout(
+      customer_id='user_123',
+      product_id='pro'
+  )
+
+asyncio.run(main())
+```
+
+```bash cURL
+curl -X POST https://api.useautumn.com/v1/checkout \
+  -H "Authorization: Bearer am_sk_xxxxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customer_id": "user_123",
+    "product_id": "pro",
+  }'
+```
+
+</CodeGroup>
+
+<CodeGroup>
+```json Upgrade [expandable]
+{
+    "customer_id": "user_1234",
+    "code": "product_found",
+    "product_id": "ultra",
+    "allowed": false,
+    "preview": {
+        "title": "Upgrade to Ultra",
+        "message": "By clicking confirm, you will upgrade your plan to Ultra and the following amount will be charged to your card immediately:",
+        "scenario": "upgrade",
+        "product_id": "ultra",
+        "product_name": "Ultra",
+        "recurring": true,
+        "next_cycle_at": 1750604867000,
+        "current_product_name": "Pro",
+        "items": [
+            {
+                "price": "-$3.53",
+                "description": "Unused time on Pro after 31 May 2025"
+            },
+            {
+                "price": "$7.06",
+                "description": "Remaining time on Ultra after 31 May 2025"
+            }
+        ],
+        "options": [
+            {
+                "feature_id": "seats",
+                "feature_name": "seats",
+                "billing_units": 1,
+                "included_usage": 0,
+                "price": 4
+            }
+        ],
+        "due_today": {
+            "price": 3.53,
+            "currency": "USD"
+        },
+        "due_next_cycle": {
+            "price": 10,
+            "currency": "USD"
+        },
+        "product": {
+            "id": "ultra",
+            "name": "Ultra",
+            "group": null,
+            "env": "sandbox",
+            "is_add_on": false,
+            "is_default": false,
+            "version": 1,
+            "created_at": 1747926427301,
+            "items": [
+                {
+                    "type": "price",
+                    "feature_id": null,
+                    "interval": "month",
+                    "price": 10
+                },
+                {
+                    "type": "priced_feature",
+                    "feature_id": "seats",
+                    "feature_type": "continuous_use",
+                    "included_usage": 0,
+                    "interval": "month",
+                    "price": null,
+                    "tiers": [
+                        {
+                            "to": "inf",
+                            "amount": 4
+                        }
+                    ],
+                    "usage_model": "prepaid",
+                    "billing_units": 1,
+                    "reset_usage_when_enabled": true
+                },
+                {
+                    "type": "feature",
+                    "feature_id": "chat_messages",
+                    "feature_type": "single_use",
+                    "included_usage": 20,
+                    "interval": "month",
+                    "reset_usage_when_enabled": true
+                }
+            ],
+            "free_trial": null
+        }
+    }
+}
+```
+
+```json Downgrade [expandable]
+{
+  "customer_id": "user_1234",
+  "code": "product_found",
+  "product_id": "pro",
+  "allowed": false,
+  "preview": {
+    "title": "Downgrade to Pro",
+    "message": "By clicking confirm, your current subscription to Ultra will end on 22 Jun 2025 and a new subscription to Pro will begin.",
+    "scenario": "downgrade",
+    "product_id": "pro",
+    "product_name": "Pro",
+    "recurring": true,
+    "next_cycle_at": 1750604867000,
+    "current_product_name": "Ultra",
+    "error_on_attach": false,
+    "product": {
+      "id": "pro",
+      "name": "Pro",
+      "group": null,
+      "env": "sandbox",
+      "is_add_on": false,
+      "is_default": false,
+      "version": 1,
+      "created_at": 1747912396998,
+      "items": [
+        {
+          "type": "price",
+          "feature_id": null,
+          "interval": "month",
+          "price": 5
+        },
+        {
+          "type": "feature",
+          "feature_id": "premium_support",
+          "feature_type": "static"
+        }
+      ],
+      "free_trial": null
+    }
+  }
+}
+```
+
+```json New Purchase
+{
+  "customer_id": "user_123",
+  "code": "product_found",
+  "product_id": "ultra",
+  "allowed": false,
+  "preview": null
+}
+```
+
+</CodeGroup>
+
+The `preview` object that is returned from the `checkout` function can be used to display the data you want to the user.
+
+Example implementation:
+
+```tsx React
+import { useCustomer } from "autumn-js/react";
+
+export default function PurchaseButton() {
+  const { checkout, attach } = useCustomer();
+
+  return (
+    <button
+      onClick={async () => {
+        const { data } = await checkout({
+          productId: "ultra",
+        });
+
+        //throw a browser popup if no checkout URL
+        if (!data?.url && window.confirm(data.preview.scenario)) {
+          await attach({
+            productId: "ultra",
+          });
+        }
+      }}
+    >
+      Upgrade to Ulta
+    </button>
+  );
+}
+```
+
+If `preview` is returned, it will contain a `scenario` enum. You can use this to control the messaging you display to the user. See our [shadcn/ui dialog](/setup/shadcn#scenarios-2) messaging for an example.
+
+| Scenario    | Description                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------------- |
+| `upgrade`   | The customer is upgrading their product                                                                   |
+| `downgrade` | The customer is downgrading to another paid tier                                                          |
+| `cancel`    | The customer is downgrading to a free product                                                             |
+| `renew`     | The customer is reactivating a product that was previously cancelled                                      |
+| `scheduled` | The product is already scheduled to start at a future date (eg, for downgrades), so no changes are needed |
+| `active`    | The customer already has the product active, so no changes are needed                                     |
+
+## Paywall
+
+A paywall that prompts users to upgrade to the next tier when they hit a usage limit, or don't have access to a feature.
+
+The `check` function has a `with_preview` parameter that can be used to get paywall preview information when a customer doesn't have access to a feature. This will contain information about the next product tier (or an add-on) they should upgrade to, in order to access the feature.
+
+<CodeGroup>
+
+```typescript React
+import { useCustomer } from "autumn-js/react";
+const { check } = useCustomer();
+const { data, error } = await check({
+  featureId: "chat_messages",
+  withPreview: true,
+});
+```
+
+```typescript Node.js
+import { Autumn as autumn } from "autumn-js";
+const { data, error } = await autumn.check({
+  customer_id: "cus_123",
+  feature_id: "chat_messages",
+  with_preview: true,
+});
+```
+
+```bash cURL
+curl -X POST https://api.useautumn.com/v1/check \
+-H "Authorization: Bearer am_sk_xxxxxxxxxx" \
+-H "Content-Type: application/json" \
+-d '{
+"customer_id": "cus_123",
+"feature_id": "chat_messages",
+"with_preview": true
+}'
+```
+
+</CodeGroup>
+
+<CodeGroup>
+
+```json Usage Limit [expandable]
+{
+  "customer_id": "user_1234",
+  "feature_id": "chat_messages",
+  "required_balance": 1,
+  "code": "feature_found",
+  "allowed": false,
+  "unlimited": false,
+  "balance": 0,
+  "preview": {
+    "title": "Upgrade to Pro",
+    "message": "You have run out of messages. Please upgrade to Pro to continue using this feature.",
+    "scenario": "usage_limit",
+    "feature_id": "chat_messages",
+    "feature_name": "messages",
+    "products": [
+      {
+        "id": "pro",
+        "name": "Pro",
+        "group": null,
+        "env": "sandbox",
+        "is_add_on": false,
+        "is_default": false,
+        "version": 2,
+        "created_at": 1748802907591,
+        "items": [
+          {
+            "type": "price",
+            "feature_id": null,
+            "interval": "month",
+            "price": 55
+          },
+          {
+            "type": "feature",
+            "feature_id": "chat_messages",
+            "feature_type": "single_use",
+            "included_usage": 300,
+            "interval": "month",
+            "reset_usage_when_enabled": true
+          },
+          {
+            "type": "feature",
+            "feature_id": "premium_support",
+            "feature_type": "static"
+          }
+        ],
+        "free_trial": null
+      }
+    ],
+    "upgrade_product_id": "pro"
+  }
+}
+```
+
+```json Feature Flag [expandable]
+{
+  "customer_id": "user_1234",
+  "feature_id": "premium_support",
+  "code": "feature_found",
+  "allowed": false,
+  "preview": {
+    "scenario": "feature_flag",
+    "title": "Feature Unavailable",
+    "feature_id": "premium_support",
+    "feature_name": "Premium support",
+    "message": "Your current plan does not include the Premium support feature. Please contact us to get access.",
+    "products": [],
+    "upgrade_product_id": null
+  }
+}
+```
+
+```json Feature Allowed [expandable]
+{
+  "customer_id": "user_1234",
+  "feature_id": "chat_messages",
+  "required_balance": 1,
+  "code": "feature_found",
+  "allowed": true,
+  "unlimited": false,
+  "balance": 1,
+  "preview": null
+}
+```
+
+</CodeGroup>
+
+The preview object that is returned from the check function can be used to control the paywall's contents. preview will be null if the feature is allowed and no paywall should be shown.
+
+Example implementation:
+
+```jsx [expandable]
+import { useCustomer } from "autumn-js/react";
+
+export default function FeatureButton() {
+  const { check, attach } = useCustomer();
+
+  return (
+    <button
+      onClick={async () => {
+        const { data } = await check({
+          featureId: "chat_messages",
+          withPreview: true,
+        });
+
+        if (!data?.allowed && data?.preview) {
+          if (
+            window.confirm(`${data.preview.title}: ${data.preview.message}`)
+          ) {
+            if (data.preview.upgrade_product_id) {
+              await attach({
+                productId: data.preview.upgrade_product_id,
+              });
+            }
+          }
+        }
+      }}
+    >
+      Send Message
+    </button>
+  );
+}
+```
+
+If preview is returned, it will contain a scenario enum, which you can use this to control the paywall's contents. See our [shadcn/ui paywall dialog](/setup/shadcn#scenarios-3) messaging for an example.
+
+| Scenario       | Description                                        |
+| -------------- | -------------------------------------------------- |
+| `usage_limit`  | The customer has hit a usage limit for the feature |
+| `feature_flag` | The customer doesn't have access to the feature    |

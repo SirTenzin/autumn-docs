@@ -1,7 +1,6 @@
 ---
-title: "Backend integration"
-sidebarTitle: "Backend Only"
-description: "Implement your app's payments and pricing model from your backend"
+title: "Backend Only"
+description: "Implement your app's payments and pricing model using Autumn's API"
 ---
 
 In this example we'll create the pricing for a premium AI chatbot. We're going to have:
@@ -10,9 +9,9 @@ In this example we'll create the pricing for a premium AI chatbot. We're going t
 - A Pro plan that gives users 100 chat messages per month for $20 per month.
 
 <Info>
-  Autumn provides React hooks and components for an easier developer experience.
-  If you're not using Typescript, have an unsupported framework or just prefer a
-  backend-only setup for full control, use this guide.
+  Autumn provides [React hooks](/setup) and components for an easier developer
+  experience. If you're not using Typescript, have an unsupported framework or
+  just prefer a backend-only setup for full control, use this guide.
 </Info>
 
 ## 1. Create your products
@@ -205,7 +204,7 @@ import { Autumn } from "autumn-js";
 const autumn = new Autumn({ secretKey: "am_sk_..." });
 
 const { data } = await autumn.checkout({
-  customer_id: "user_123",
+  customer_id: "internal_user_or_org_id_from_auth",
   product_id: "pro",
 });
 ```
@@ -218,7 +217,51 @@ autumn = Autumn("am_sk_1234567890")
 
 async def main():
   response = await autumn.checkout(
-      customer_id='user_123',
+      customer_id='internal_user_or_org_id_from_auth',
+      product_id='pro'
+  )
+
+asyncio.run(main())
+```
+
+```bash cURL
+curl -X POST 'https://api.useautumn.com/v1/checkout' \
+-H 'Authorization: Bearer am_sk_1234567890' \
+-H 'Content-Type: application/json' \
+-d '{
+  "customer_id": "internal_user_or_org_id_from_auth",
+  "product_id": "pro"
+}'
+```
+
+</CodeGroup>
+
+#### Attach
+
+If the payment details are on file and the customer is ready to make the payment, use the `attach` function to enable the product (and charge the customer if applicable).
+
+<CodeGroup>
+
+```typescript Node.js
+import { Autumn } from "autumn-js";
+
+const autumn = new Autumn({ secretKey: "am_sk_..." });
+
+const { data } = await autumn.attach({
+  customer_id: "internal_user_or_org_id_from_auth",
+  product_id: "pro",
+});
+```
+
+```python Python
+import asyncio
+from autumn import Autumn
+
+autumn = Autumn("am_sk_1234567890")
+
+async def main():
+  response = await autumn.attach(
+      customer_id='internal_user_or_org_id_from_auth',
       product_id='pro'
   )
 
@@ -230,82 +273,109 @@ curl -X POST 'https://api.useautumn.com/v1/attach' \
 -H 'Authorization: Bearer am_sk_1234567890' \
 -H 'Content-Type: application/json' \
 -d '{
-  "customer_id": "user_123",
+  "customer_id": "internal_user_or_org_id_from_auth",
   "product_id": "pro"
 }'
 ```
 
 </CodeGroup>
 
-#### Attach
-
-If the payment details are on file and the customer is ready to make the payment, use the `attach` function to enable the product (and charge the customer if applicable).
-
-## 4. Build Pricing Logic
+## 3. Build Pricing Logic
 
 There are 3 key functions you need to handle the billing logic once the customer has purchased the Pro plan:
 
 - `check` for feature access to see if the customer is allowed to send a message.
 - `track` a usage event in Autumn
-- `customer` to display usage data in the UI.
-
-#### Client-side
-
-The `customer` object is a single state that contains all the billing data for your user (subscription states, feature permissions, usage balances, etc).
-
-Use the client-side `check` function to gate features and show paywalls. This is determined by reading the local `customer` state, so no API call is made.
-
-```jsx send-message.tsx
-import { useCustomer } from "autumn-js/react";
-
-export default function SendChatMessage() {
-  const { customer, check, refetch } = useCustomer();
-
-  return (
-    <>
-      <button
-        onClick={async () => {
-          const { data } = check({ featureId: "messages" });
-
-          if (!data?.allowed) {
-            alert("You're out of messages");
-          } else {
-            //send chatbot message server-side, then
-            await refetch(); // refetch customer usage data
-
-            //display remaining messages
-            const messages = customer?.features.messages;
-            console.log("Remaining messages: " + messages?.balance);
-          }
-        }}
-      >
-        Send AI Message
-      </button>
-    </>
-  );
-}
-```
-
-#### Server-side
+- `customer` to fetch subscription and usage data.
 
 You should handle feature access checks on the backend too for security. The server-side `check` function makes an API call to Autumn's DB to fetch the latest information.
 
-```typescript send-message.ts
+<CodeGroup>
+
+```typescript Node.js
 import { Autumn as autumn } from "autumn-js";
 
+// check feature access
 const { data } = await autumn.check({
-  customer_id: "user_123", // same user id from auth as in the autumn handler
+  customer_id: "user_123",
   feature_id: "messages",
 });
+if (!data.allowed) {
+  console.log("No more messages!");
+  return;
+}
 
-// server-side function to send the message
+// ... your own function to send the message
+
 // then record the usage in Autumn
-
 await autumn.track({
   customer_id: "user_123",
   feature_id: "messages",
 });
+
+// fetch customer usage + billing data
+const customer = await autumn.customers.get("user_123");
+const messages = customer?.features.messages;
+console.log("Remaining messages: " + messages?.balance);
 ```
+
+```python Python
+import asyncio
+from autumn import Autumn
+
+autumn = Autumn('am_sk_1234567890')
+
+async def main():
+
+    # check feature access
+    response = await autumn.check(
+      customer_id='user_123',
+      feature_id='messages'
+    )
+
+    # ... your own function to send the message
+
+    # then record the usage in Autumn
+    await autumn.track(
+        customer_id='user_123',
+        feature_id='messages',
+        value=3
+    )
+
+    # fetch customer usage + billing data
+    customer = await autumn.customers.get('user_123')
+
+asyncio.run(main())
+```
+
+```bash cURL
+# check feature access
+curl -X POST 'https://api.useautumn.com/v1/check' \
+-H 'Authorization: Bearer am_sk_1234567890' \
+-H 'Content-Type: application/json' \
+-d '{
+  "customer_id": "user_123",
+  "feature_id": "messages"
+}'
+
+# ... your own function to send the message
+
+# then record the usage in Autumn
+curl -X POST 'https://api.useautumn.com/v1/track' \
+  -H 'Authorization: Bearer am_sk_1234567890' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "customer_id": "user_123",
+    "feature_id": "messages",
+  }'
+
+# fetch customer usage + billing data
+curl 'https://api.useautumn.com/v1/customers/user_123' \
+-H 'Authorization: Bearer am_sk_1234567890'
+
+```
+
+</CodeGroup>
 
 **Congrats 🎉**
 
@@ -313,6 +383,5 @@ Nice! You've now integrated Autumn into your application. You can make pricing c
 
 Next steps:
 
-- Add Stripe's [billing portal](/api-reference/hooks/useCustomer#openbillingportal)
+- Add Stripe's [billing portal](/api-reference/customers/billing-portal)
 - Handle failed payments
-- Use our UI [components](/quickstart/shadcn) to show a pricing table, and handle upgrades, downgrades and paywalls.

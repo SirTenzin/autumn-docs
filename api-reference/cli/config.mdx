@@ -16,8 +16,6 @@ You can export `features` and `products` from this config file, and push them to
 
 The features of your application that can be gated depending on pricing tier. These will be used to define your products.
 
-### Parameters
-
 <ParamField body="id" type="string" required>
   The ID of the feature that will be used via Autumn's APIs.
 </ParamField>
@@ -106,8 +104,6 @@ export const sso = feature({
 
 Products are made up of features and prices, and define your pricing plans. You should create products for any free plans, paid plans and any add-ons / top-up products.
 
-### Parameters
-
 <ParamField body="id" type="string" required>
   The ID of the product that will be used via Autumn's APIs.
 </ParamField>
@@ -141,8 +137,6 @@ Define your products using a combination of the 3 item types below.
 #### Feature Item
 
 A feature that is included with the product.
-
-**Parameters**
 
 <ParamField body="feature_id" type="string">
   Feature ID for the product item
@@ -198,8 +192,6 @@ export const free = product({
 
 A fixed price to be charged with the product: either one-time or a subscription.
 
-**Parameters**
-
 <ParamField body="price" type="number">
   A fixed amount to charge for this product
 </ParamField>
@@ -236,8 +228,6 @@ export const pro = product({
 #### Priced Feature Item
 
 A price to be charged based on the usage or prepaid quantity of a feature.
-
-**Parameters**
 
 <ParamField body="feature_id" type="string">
   Feature ID for the product item

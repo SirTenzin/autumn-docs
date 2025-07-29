@@ -1,6 +1,6 @@
 ---
-title: "React and shadcn/ui components"
-sidebarTitle: "React and shadcn/ui"
+title: "React and Shadcn/UI components"
+sidebarTitle: "React and Shadcn/UI"
 description: "Drop in Autumn's components to handle upgrades, downgrades, paywalls etc"
 ---
 
@@ -17,6 +17,12 @@ Autumn offers the components in 2 forms: React components to drop in, or customi
 ## Pricing Table
 
 The pricing table component displays your available products, the features available in each and any prices. You can also pass in a `productDetails` prop to add information to the pricing card contents.
+
+<img
+  src="/assets/quickstart/ui-components/pricing-table.png"
+  alt="Pricing Table"
+  className="border"
+/>
 
 **React**
 
@@ -46,12 +52,6 @@ bunx --bun shadcn@latest add https://ui.useautumn.com/pricing-table
 </CodeGroup>
 
 This will download the pricing-table component in your `/components` directory, under a `/autumn` folder.
-
-<img
-  src="/assets/quickstart/ui-components/pricing-table.png"
-  alt="Pricing Table"
-  className="border"
-/>
 
 #### Usage
 
@@ -106,9 +106,88 @@ const productDetails = [
 ];
 ```
 
+#### Scenarios
+
+When you install `pricing-table`, a `@/lib/autumn/pricing-table-content.tsx` file is also installed. This file contains the pricing card button texts for each `scenario`, which you can customize how you want.
+
+```tsx /lib/autumn/get-checkout-content.tsx [expandable]
+import { type Product } from "autumn-js";
+
+export const getPricingTableContent = (product: Product) => {
+  const { scenario, free_trial, properties } = product;
+  const { is_one_off, has_prepaid, has_trial } = properties;
+
+  if (has_trial) {
+    return {
+      buttonText: <p>Start Free Trial</p>,
+    };
+  }
+
+  switch (scenario) {
+    case "scheduled":
+      return {
+        buttonText: <p>Plan Scheduled</p>,
+      };
+
+    case "active":
+      if (has_prepaid) {
+        return {
+          buttonText: <p>Update Plan</p>,
+        };
+      }
+
+      return {
+        buttonText: <p>Current Plan</p>,
+      };
+
+    case "new":
+      if (is_one_off) {
+        return {
+          buttonText: <p>Purchase</p>,
+        };
+      }
+
+      return {
+        buttonText: <p>Get started</p>,
+      };
+
+    case "renew":
+      return {
+        buttonText: <p>Renew</p>,
+      };
+
+    case "upgrade":
+      return {
+        buttonText: <p>Upgrade</p>,
+      };
+
+    case "downgrade":
+      return {
+        buttonText: <p>Downgrade</p>,
+      };
+
+    case "cancel":
+      return {
+        buttonText: <p>Cancel Plan</p>,
+      };
+
+    default:
+      return {
+        buttonText: <p>Get Started</p>,
+      };
+  }
+};
+```
+
 ## Checkout Dialog
 
 The Checkout dialog will open when a customer wants to change their active product, such as when they upgrade or downgrade, to let them preview how much will be charged, and confirm the change.
+
+<img
+  src="/assets/quickstart/ui-components/product-change-dialog.png"
+  alt="Product Change Dialog"
+  className="border"
+/>
 
 **React**
 
@@ -136,11 +215,6 @@ bunx --bun shadcn@latest add https://ui.useautumn.com/checkout-dialog
 ```
 
 </CodeGroup>
-<img
-  src="/assets/quickstart/ui-components/product-change-dialog.png"
-  alt="Product Change Dialog"
-  className="border"
-/>
 
 This will download the checkout-dialog component in your `/components` directory, under a `/autumn` folder.
 
@@ -343,15 +417,6 @@ Now when you use the `check()` function, Autumn will automatically pass in the `
 - A button that lets them purchase the next tier or add-on
 
 #### Scenarios
-
-The `check({withPreview: true})` call can return a [`preview` object](/api-reference/check#response-product-preview) that contains a `scenario` enum, which is used to control the dialog's contents. It can be one of the following:
-
-| Scenario       | Description                                        |
-| -------------- | -------------------------------------------------- |
-| `usage_limit`  | The customer has hit a usage limit for the feature |
-| `feature_flag` | The customer doesn't have access to the feature    |
-
-The `preview` object also contains a `products` array, which contains the products that the customer can purchase to access the feature.
 
 When the `paywall-dialog` component is installed, a `/lib/autumn/get-paywall-content.tsx` file is also installed. This file contains the dialog texts for each scenario (depending on the available products), which you can customize how you want.
 

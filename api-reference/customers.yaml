@@ -144,6 +144,9 @@ paths:
             schema:
               type: object
               properties:
+                id:
+                  type: string
+                  description: New ID to update the customer to (eg if switching from user to org)
                 name:
                   type: string
                   description: The customer's full name

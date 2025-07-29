@@ -26,12 +26,12 @@
             "group": "Setup",
             "pages": [
               {
-                "group": "Integration",
+                "group": "Integrate",
                 "pages": ["setup", "setup/backend", "setup/ai-builders"]
               },
               {
                 "group": "Components",
-                "pages": ["setup/shadcn", "setup/billing-flows"]
+                "pages": ["setup/shadcn", "setup/roll"]
               }
             ]
           },
@@ -86,9 +86,10 @@
           {
             "group": "Core",
             "pages": [
-              "api-reference/attach",
-              "api-reference/check",
-              "api-reference/track"
+              "api-reference/core/checkout",
+              "api-reference/core/attach",
+              "api-reference/core/check",
+              "api-reference/core/track"
             ]
           },
           {

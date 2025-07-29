@@ -13,11 +13,11 @@ security:
   - secretKeyAuth: []
 
 paths:
-  /attach:
+  /checkout:
     post:
       security:
         - secretKeyAuth: []
-      description: Returns a Stripe Checkout URL for the customer to complete their purchase, or handles the purchase if the customer's card is already on file.
+      description: Returns a Stripe Checkout URL for the customer to make a payment, or returns payment confirmation information.
       requestBody:
         description: ""
         content:
@@ -42,10 +42,6 @@ paths:
                 success_url:
                   type: string
                   description: URL to redirect to after the purchase is successful
-                force_checkout:
-                  type: boolean
-                  default: false
-                  description: Always return a Stripe Checkout URL, even if the customer's card is already on file.
                 options:
                   type: array
                   description: Pass in quantities for prepaid features.
@@ -58,9 +54,335 @@ paths:
                       quantity:
                         type: integer
                         description: Quantity of the feature (eg number of seats) to be purchased. Required if billing is in-advance usage-based.
+                reward:
+                  type: string
+                  description: An Autumn promo_code or reward_id to apply at checkout.
                 entity_id:
                   type: string
                   description: If using [entities](/features/feature-entities), the entity to attach the product to.
+                customer_data:
+                  $ref: "#/components/schemas/CustomerData"
+                checkout_session_params:
+                  type: object
+                  description: Additional parameters to pass onto Stripe when creating the checkout session.
+      x-code-samples:
+        - lang: typescript
+          label: required
+          source: |
+            import { Autumn as autumn } from 'autumn-js'
+
+            const response = await autumn.checkout({
+              customer_id: 'user_123',
+              product_id: 'pro'
+            })
+        - lang: typescript
+          label: with customer_data
+          source: |
+            import { Autumn as autumn } from 'autumn-js';
+
+            const response = await autumn.checkout({
+              customer_id: 'user_123',
+              product_id: 'pro',
+              customer_data: {
+                name: 'John Yeo',
+                email: 'john@example.com'
+              }
+            });
+        - lang: curl
+          source: |
+            curl -X POST 'https://api.useautumn.com/v1/checkout' \
+            -H 'Authorization: Bearer am_sk_1234567890' \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "customer_id": "user_123",
+              "product_id": "pro"
+            }'
+        - lang: python
+          label: required
+          source: |
+            import asyncio
+            from autumn import Autumn
+
+            autumn = Autumn("am_sk_1234567890")
+
+            async def main():
+              response = await autumn.checkout(
+                  customer_id='user_123',
+                  product_id='pro'
+              )
+
+            asyncio.run(main())
+        - lang: python
+          label: with customer_data
+          source: |
+            import asyncio
+            from autumn import Autumn, CustomerData
+
+            autumn = Autumn("am_sk_1234567890")
+
+            async def main():
+              response = await autumn.checkout(
+                  customer_id='user_123',
+                  product_id='pro',
+                  customer_data=CustomerData(
+                      name='John Yeo',
+                      email='john@example.com'
+                  )
+              )
+
+            asyncio.run(main())
+      responses:
+        "200":
+          description: " "
+          content:
+            application/json:
+              schema:
+                type: object
+              examples:
+                checkout url:
+                  value:
+                    url: "https://checkout.stripe.com/c/pay/cs_test_b1aiNVtSaxIymaUwIgzyDqxsX9TryoFzm8uS0nhncxN6TXFKCydjB9waEk#fid2cGd2ZndsdXFsamtQa2x0cGBrYHZ2QGtkZ2lgYSc%2FY2RpdmApJ2R1bE5gfCc%2FJ3VuWnFgdnFaMDRVajE2YUJNal9QRHVdXWFUVU90T0xNN3NUSXRdXWNqbEw9RGd2QlF9TkhdSU9VU29uSFFRSzJzVUJoVzFxalFhZzw0QmBUUXI9ckZDbGNEQ39nM1N9aGM1NWN2cTN0QWtrJyknY3dqaFZgd3Ngdyc%2FcXdwYCknaWR8anBxUXx1YCc%2FJ2hwaXFsWmxxYGgnKSdga2RnaWBVaWRmYG1qaWFgd3YnP3F3cGB4JSUl"
+                    customer_id: "b"
+                    lines: []
+                    product:
+                      id: "pro"
+                      name: "Pro"
+                      group: null
+                      env: "sandbox"
+                      is_add_on: false
+                      is_default: false
+                      version: 2
+                      created_at: 1753805339212
+                      items:
+                        - type: "price"
+                          feature_id: null
+                          feature: null
+                          interval: "month"
+                          price: 20
+                        - type: "priced_feature"
+                          feature_id: "messages"
+                          feature_type: "single_use"
+                          feature:
+                            id: "messages"
+                            name: "Messages"
+                            type: "single_use"
+                            display:
+                              singular: "message"
+                              plural: "messages"
+                          included_usage: 100
+                          interval: "month"
+                          price: 0.1
+                          usage_model: "pay_per_use"
+                          billing_units: 1
+                          reset_usage_when_enabled: false
+                          entity_feature_id: null
+                      free_trial: null
+                      base_variant_id: null
+                      scenario: "new"
+                      properties:
+                        is_free: false
+                        is_one_off: false
+                        interval_group: "month"
+                        has_trial: false
+                        updateable: false
+                upgrades and downgrades:
+                  value:
+                    customer_id: "a"
+                    lines:
+                      - description: "Unused Pro - $20 / month (from 29 Jul 2025)"
+                        amount: -19.92096809289128
+                        item:
+                          type: "price"
+                          feature_id: null
+                          feature: null
+                          interval: "month"
+                          price: 20
+                          display:
+                            primary_text: "$20"
+                            secondary_text: "per month"
+                      - description: "Pro - 200 messages"
+                        amount: 10
+                        item:
+                          type: "priced_feature"
+                          feature_id: "messages"
+                          feature_type: "single_use"
+                          feature:
+                            id: "messages"
+                            name: "Messages"
+                            type: "single_use"
+                            display:
+                              singular: "message"
+                              plural: "messages"
+                          included_usage: 100
+                          interval: "month"
+                          price: 0.1
+                          usage_model: "pay_per_use"
+                          billing_units: 1
+                          reset_usage_when_enabled: false
+                          entity_feature_id: null
+                          display:
+                            primary_text: "100 message"
+                            secondary_text: "then $0.1 per message"
+                      - description: "Ultra - $100 / month (from 29 Jul 2025)"
+                        amount: 99.60484046445639
+                        item:
+                          type: "price"
+                          feature_id: null
+                          feature: null
+                          interval: "month"
+                          price: 100
+                          display:
+                            primary_text: "$100"
+                            secondary_text: "per month"
+                    product:
+                      id: "ultra"
+                      name: "Ultra"
+                      group: null
+                      env: "sandbox"
+                      is_add_on: false
+                      is_default: false
+                      version: 1
+                      created_at: 1753816049300
+                      items:
+                        - type: "price"
+                          feature_id: null
+                          feature: null
+                          interval: "month"
+                          price: 100
+                          display:
+                            primary_text: "$100"
+                            secondary_text: "per month"
+                        - type: "feature"
+                          feature_id: "messages"
+                          feature_type: "single_use"
+                          feature:
+                            id: "messages"
+                            name: "Messages"
+                            type: "single_use"
+                            display:
+                              singular: "message"
+                              plural: "messages"
+                          included_usage: 100
+                          interval: "month"
+                          reset_usage_when_enabled: true
+                          entity_feature_id: null
+                          display:
+                            primary_text: "100 message"
+                      free_trial: null
+                      base_variant_id: null
+                      scenario: "upgrade"
+                      properties:
+                        is_free: false
+                        is_one_off: false
+                        interval_group: "month"
+                        has_trial: false
+                        updateable: false
+                    current_product:
+                      id: "pro"
+                      name: "Pro"
+                      group: null
+                      env: "sandbox"
+                      is_add_on: false
+                      is_default: false
+                      version: 2
+                      created_at: 1753805339212
+                      items:
+                        - type: "price"
+                          feature_id: null
+                          feature: null
+                          interval: "month"
+                          price: 20
+                          display:
+                            primary_text: "$20"
+                            secondary_text: "per month"
+                        - type: "priced_feature"
+                          feature_id: "messages"
+                          feature_type: "single_use"
+                          feature:
+                            id: "messages"
+                            name: "Messages"
+                            type: "single_use"
+                            display:
+                              singular: "message"
+                              plural: "messages"
+                          included_usage: 100
+                          interval: "month"
+                          price: 0.1
+                          usage_model: "pay_per_use"
+                          billing_units: 1
+                          reset_usage_when_enabled: false
+                          entity_feature_id: null
+                          display:
+                            primary_text: "100 message"
+                            secondary_text: "then $0.1 per message"
+                      free_trial: null
+                      base_variant_id: null
+                      scenario: "new"
+                      properties:
+                        is_free: false
+                        is_one_off: false
+                        interval_group: "month"
+                        has_trial: false
+                        updateable: false
+                    total: 89.68387237156512
+                    currency: "USD"
+                    next_cycle:
+                      starts_at: 1756483882000
+                      total: 100
+                    options: []
+                    has_prorations: true
+
+  /attach:
+    post:
+      security:
+        - secretKeyAuth: []
+      description: Enables a product and handles a payment if the customer's card is already on file.
+      requestBody:
+        description: ""
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - customer_id
+                - product_id
+              properties:
+                customer_id:
+                  type: string
+                  description: Your unique identifier for the customer
+                product_id:
+                  type: string
+                  description: Product ID, set when creating the product in the Autumn dashboard
+                product_ids:
+                  type: array
+                  description: List of product IDs to attach to the customer in the same subscription or transaction
+                  items:
+                    type: string
+                success_url:
+                  type: string
+                  description: URL to redirect to after the purchase is successful
+                options:
+                  type: array
+                  description: Pass in quantities for prepaid features.
+                  items:
+                    type: object
+                    properties:
+                      feature_id:
+                        type: string
+                        description: Feature ID of the feature that will be affected by the options.
+                      quantity:
+                        type: integer
+                        description: Quantity of the feature (eg number of seats) to be purchased. Required if billing is in-advance usage-based.
+                reward:
+                  type: string
+                  description: An Autumn promo_code or reward_id to apply at checkout.
+                entity_id:
+                  type: string
+                  description: If using [entities](/features/feature-entities), the entity to attach the product to.
+                force_checkout:
+                  type: boolean
+                  default: false
+                  description: Always return a Stripe Checkout URL, even if the customer's card is already on file.
                 customer_data:
                   $ref: "#/components/schemas/CustomerData"
                 metadata:
@@ -153,13 +475,13 @@ paths:
                     type: string
                     description: Description of the action taken
               examples:
-                checkout url:
-                  value:
-                    checkout_url: https://checkout.stripe.com/c/pay/<hash>
                 upgrades and downgrades:
                   value:
-                    success: true
-                    message: Product change handled
+                    customer_id: "a"
+                    product_ids:
+                      - "pro"
+                    code: "updated_product_successfully"
+                    message: "Successfully updated product"
 
   /customers/{customer_id}/billing_portal:
     post:
