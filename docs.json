@@ -11,6 +11,9 @@
     "default": "system",
     "strict": false
   },
+  "contextual": {
+    "options": ["copy", "view", "chatgpt", "claude", "perplexity"]
+  },
   "favicon": "/favicon.png",
   "navigation": {
     "anchors": [
