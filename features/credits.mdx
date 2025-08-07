@@ -48,7 +48,7 @@ curl -X POST "https://api.useautumn.com/v1/check" \
 ```javascript Typescript
 import { Autumn as autumn } from "autumn-js";
 
-const { allowed } = await autumn.check({
+const { data } = await autumn.check({
   customer_id: "user-123",
   feature_id: "audio-transcription-minutes",
 });
@@ -75,15 +75,26 @@ The response will contain the ID of the credit system you defined.
 
 ```json {8}
 {
-  "customer_id": "john-mcyeo",
-  "feature_id": "small-model-tokens",
-  "code": "feature_found",
   "allowed": true,
-  "balances": [
+  "customer_id": "johnyeo",
+  "feature_id": "credits",
+  "required_balance": 3,
+  "code": "feature_found",
+  "interval": "month",
+  "unlimited": false,
+  "balance": 100,
+  "usage": 0,
+  "included_usage": 100,
+  "next_reset_at": 1757192635393,
+  "overage_allowed": false,
+  "credit_schema": [
     {
-      "feature_id": "transcription-credits",
-      "unlimited": false,
-      "balance": 10000
+      "feature_id": "audio-transcription-minutes",
+      "credit_amount": 3
+    },
+    {
+      "feature_id": "video-transcription-minutes",
+      "credit_amount": 5
     }
   ]
 }

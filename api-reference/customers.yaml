@@ -39,7 +39,7 @@ paths:
           source: |
             import { Autumn as autumn } from 'autumn-js';
 
-            const customer = await autumn.customers.create({
+            const { data } = await autumn.customers.create({
               id: 'user_123',
               name: 'John Yeo',
               email: 'john@example.com'
@@ -98,7 +98,7 @@ paths:
           source: |
             import { Autumn as autumn } from 'autumn-js';
 
-            const customer = await autumn.customers.get('user_123');
+            const { data } = await autumn.customers.get('user_123');
 
         - lang: curl
           source: |
@@ -162,7 +162,7 @@ paths:
           source: |
             import { Autumn as autumn } from 'autumn-js';
 
-            const customer = await autumn.customers.update('user_123', {
+            const { data } = await autumn.customers.update('user_123', {
               name: 'John Yeo',
               email: 'john@example.com'
             });
