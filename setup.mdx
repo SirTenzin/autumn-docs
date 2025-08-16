@@ -357,45 +357,6 @@ app.use(
 );
 ```
 
-```typescript Convex
-//convex/http.ts
-
-import { httpRouter } from "convex/server";
-import { httpAction } from "./_generated/server";
-import { autumnHandler } from "autumn-js/convex";
-import { ROUTABLE_HTTP_METHODS } from "convex/server";
-
-const http = httpRouter();
-const handler = autumnHandler({
-  httpAction,
-  identify: async () => {
-    // get the user from your auth provider (example: better-auth)
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
-    return {
-      customerId: session?.user.id,
-      customerData: {
-        name: session?.user.name,
-        email: session?.user.email,
-      },
-    };
-  },
-});
-
-for (const method of ROUTABLE_HTTP_METHODS) {
-  http.route({
-    pathPrefix: "/api/autumn/",
-    method,
-    handler,
-  });
-}
-
-// Convex expects the router to be the default export of `convex/http.js`.
-export default http;
-```
-
 ```typescript Fastify
 //index.ts
 
