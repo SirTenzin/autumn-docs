@@ -1,186 +1,190 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "theme": "palm",
-  "name": "Autumn",
-  "colors": {
-    "primary": "#7C3EFF",
-    "light": "#f5f5f5",
-    "dark": "#7C3EFF"
-  },
-  "appearance": {
-    "default": "system",
-    "strict": false
-  },
-  "contextual": {
-    "options": ["copy", "view", "chatgpt", "claude", "perplexity"]
-  },
-  "favicon": "/favicon.png",
-  "navigation": {
-    "anchors": [
-      {
-        "anchor": "Docs",
-        "icon": "folder-open",
-        "groups": [
-          {
-            "group": " ",
-            "pages": ["welcome"]
-          },
-          {
-            "group": "Setup",
-            "pages": [
-              {
-                "group": "Integrate",
-                "pages": ["setup", "setup/backend", "setup/ai-builders"]
-              },
-              {
-                "group": "Components",
-                "pages": ["setup/shadcn", "setup/roll"]
-              }
-            ]
-          },
-          {
-            "group": "Products",
-            "pages": [
-              "products/create-product",
-              "products/product-items",
-              "products/enabling-product",
-              "products/changing-product",
-              "products/rewards"
-            ]
-          },
-          {
-            "group": "Features",
-            "pages": [
-              "features/check",
-              "features/tracking-usage",
-              "features/balances",
-              "features/credits",
-              "features/feature-entities"
-            ]
-          },
-          {
-            "group": "Customers",
-            "pages": [
-              "customers/creating-customers",
-              "customers/managing-customers"
-            ]
-          },
-          {
-            "group": "Pricing Guides",
-            "pages": ["guides/credits", "guides/prepaid"]
-          }
-        ]
-      },
-      {
-        "anchor": "API Reference",
-        "icon": "square-terminal",
-        "groups": [
-          {
-            "group": "Hooks",
-            "pages": [
-              "api-reference/hooks/useCustomer",
-              "api-reference/hooks/useEntity"
-            ]
-          },
-          {
-            "group": "CLI",
-            "pages": ["api-reference/cli/config"]
-          },
-          {
-            "group": "Core",
-            "pages": [
-              "api-reference/core/checkout",
-              "api-reference/core/attach",
-              "api-reference/core/check",
-              "api-reference/core/track"
-            ]
-          },
-          {
-            "group": "Customers",
-            "pages": [
-              "api-reference/customers/post",
-              "api-reference/customers/get",
-              "api-reference/customers/update",
-              "api-reference/customers/billing-portal"
-            ]
-          },
-          {
-            "group": "Features",
-            "pages": [
-              "api-reference/features/usage",
-              "api-reference/features/balances",
-              "api-reference/features/create-entity",
-              "api-reference/features/delete-entity"
-            ]
-          },
-          {
-            "group": "Products",
-            "pages": [
-              "api-reference/products/post",
-              "api-reference/products/get",
-              "api-reference/products/referral-code",
-              "api-reference/products/referral-redeem",
-              "api-reference/products/cancel"
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  "logo": {
-    "light": "/assets/logo/autumn-dark.png",
-    "dark": "/assets/logo/autumn-light.png"
-  },
-  "api": {
-    "playground": {
-      "display": "interactive"
-    },
-    "examples": {
-      "languages": ["typescript", "bash", "python"]
-    }
-  },
-  "background": {
-    "color": {
-      "light": "#FAFAFA",
-      "dark": "#1a1a1a"
-    }
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Discord",
-        "icon": "discord",
-        "href": "https://discord.gg/STqxY92zuS"
-      },
-      {
-        "label": "GitHub",
-        "icon": "github",
-        "href": "https://github.com/useautumn/autumn"
-      },
-      {
-        "label": "Website",
-        "href": "https://useautumn.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.useautumn.com"
-    }
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/autumnpricing",
-      "github": "https://github.com/useautumn",
-      "linkedin": "https://linkedin.com/company/useautumn"
-    }
-  },
-  "fonts": {
-    "heading": {
-      "family": "Inter"
-    },
-    "body": {
-      "family": "Inter"
-    }
-  }
+	"$schema": "https://mintlify.com/docs.json",
+	"theme": "palm",
+	"name": "Autumn",
+	"colors": {
+		"primary": "#7C3EFF",
+		"light": "#f5f5f5",
+		"dark": "#7C3EFF"
+	},
+	"appearance": {
+		"default": "system",
+		"strict": false
+	},
+	"contextual": {
+		"options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp"]
+	},
+	"favicon": "/favicon.png",
+	"navigation": {
+		"anchors": [
+			{
+				"anchor": "Docs",
+				"icon": "folder-open",
+				"groups": [
+					{
+						"group": " ",
+						"pages": ["welcome"]
+					},
+					{
+						"group": "Setup",
+						"pages": [
+							{
+								"group": "Integrate",
+								"pages": ["setup", "setup/backend", "setup/convex", "setup/ai-builders"]
+							},
+							{
+								"group": "Components",
+								"pages": ["setup/shadcn", "setup/roll"]
+							}
+						]
+					},
+					{
+						"group": "Products",
+						"pages": [
+							"products/create-product",
+							"products/product-items",
+							"products/enabling-product",
+							"products/changing-product",
+							"products/rewards"
+						]
+					},
+					{
+						"group": "Features",
+						"pages": [
+							"features/check",
+							"features/tracking-usage",
+							"features/balances",
+							"features/credits",
+							"features/feature-entities"
+						]
+					},
+					{
+						"group": "Customers",
+						"pages": [
+							"customers/creating-customers",
+							"customers/managing-customers"
+						]
+					},
+					{
+						"group": "Pricing Guides",
+						"pages": ["guides/credits", "guides/prepaid"]
+					}
+				]
+			},
+			{
+				"anchor": "API Reference",
+				"icon": "square-terminal",
+				"groups": [
+					{
+						"group": "Hooks",
+						"pages": [
+							"api-reference/hooks/useCustomer",
+							"api-reference/hooks/useEntity"
+						]
+					},
+					{
+						"group": "CLI",
+						"pages": ["api-reference/cli/config"]
+					},
+					{
+						"group": "Core",
+						"pages": [
+							"api-reference/core/checkout",
+							"api-reference/core/attach",
+							"api-reference/core/check",
+							"api-reference/core/track"
+						]
+					},
+					{
+						"group": "Customers",
+						"pages": [
+							"api-reference/customers/post",
+							"api-reference/customers/get",
+							"api-reference/customers/update",
+							"api-reference/customers/billing-portal"
+						]
+					},
+					{
+						"group": "Features",
+						"pages": [
+							"api-reference/features/usage",
+							"api-reference/features/balances",
+							"api-reference/features/create-entity",
+							"api-reference/features/delete-entity"
+						]
+					},
+					{
+						"group": "Products",
+						"pages": [
+							"api-reference/products/post",
+							"api-reference/products/get",
+							"api-reference/products/referral-code",
+							"api-reference/products/referral-redeem",
+							"api-reference/products/cancel"
+						]
+					},
+					{
+						"group": "Batch API",
+						"pages": ["api-reference/batch/customers/post"]
+					}
+				]
+			}
+		]
+	},
+	"logo": {
+		"light": "/assets/logo/autumn-dark.png",
+		"dark": "/assets/logo/autumn-light.png"
+	},
+	"api": {
+		"playground": {
+			"display": "interactive"
+		},
+		"examples": {
+			"languages": ["typescript", "bash", "python"]
+		}
+	},
+	"background": {
+		"color": {
+			"light": "#FAFAFA",
+			"dark": "#1a1a1a"
+		}
+	},
+	"navbar": {
+		"links": [
+			{
+				"label": "Discord",
+				"icon": "discord",
+				"href": "https://discord.gg/STqxY92zuS"
+			},
+			{
+				"label": "GitHub",
+				"icon": "github",
+				"href": "https://github.com/useautumn/autumn"
+			},
+			{
+				"label": "Website",
+				"href": "https://useautumn.com"
+			}
+		],
+		"primary": {
+			"type": "button",
+			"label": "Dashboard",
+			"href": "https://app.useautumn.com"
+		}
+	},
+	"footer": {
+		"socials": {
+			"x": "https://x.com/autumnpricing",
+			"github": "https://github.com/useautumn",
+			"linkedin": "https://linkedin.com/company/useautumn"
+		}
+	},
+	"fonts": {
+		"heading": {
+			"family": "Inter"
+		},
+		"body": {
+			"family": "Inter"
+		}
+	}
 }
