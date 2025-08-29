@@ -1,44 +1,47 @@
 ---
-title: "Convex SDK"
-description: "Implement your app's pricing model using Autumn's Convex Component"
+title: "Convex"
+description: "Implementing the Autumn + Convex component"
 ---
-
-Autumn provides a powerful Convex integration for you to use with Convex.
 
 <Note>
 	As a prerequisite, you will require Convex version 1.25.0 or higher.
 </Note>
 
-## 1. Installing the packages
+## Setup
+
+#### 1. Install the npm packages
 
 <CodeGroup>
 ```bash npm
-npm install autumn-js @atmn-hq/convex
+npm install autumn-js @useautumn/convex
 ```
 
 ```bash pnpm
-pnpm add autumn-js @atmn-hq/convex
+pnpm add autumn-js @useautumn/convex
 ```
 
 ```bash yarn
-yarn add autumn-js @atmn-hq/convex
+yarn add autumn-js @useautumn/convex
 ```
 
 ```bash bun
-bun add autumn-js @atmn-hq/convex
+bun add autumn-js @useautumn/convex
 ```
-
 </CodeGroup>
 
-## 2. Setting up the Convex backend
+#### 2. Set the Autumn secret key in your convex environment
+<CodeGroup>
+```bash
+npx convex env set AUTUMN_SECRET_KEY=am_sk_xxx
+```
+</CodeGroup>
 
-### 2.1. Mounting the Convex component
-
-First you need to mount the Convex component. You can do this in your `convex/convex.config.ts` file.
+#### 3. Add the component to your application
+Add the autumn convex component to your `convex/convex.config.ts`
 
 ```typescript convex/convex.config.ts
 import { defineApp } from "convex/server";
-import autumn from "@atmn-hq/convex/convex.config";
+import autumn from "@useautumn/convex/convex.config";
 
 const app = defineApp();
 app.use(autumn);
@@ -46,24 +49,20 @@ app.use(autumn);
 export default app;
 ```
 
-### 2.2. Setting up the Convex backend
+#### 4. Initialize the Autumn client
 
-In your `convex` folder, you can simply paste this code into a new `autumn.ts` file.
+Paste the following code into `convex/autumn.ts`
 
 ```typescript convex/autumn.ts [expandable] wrap
-import { api, components, internal } from "./_generated/api";
-import { Autumn } from "@atmn-hq/convex";
-import { action } from "./_generated/server";
-import { v } from "convex/values";
-import { GenericActionCtx } from "convex/server";
+import { components } from "./_generated/api";
+import { Autumn } from "@useautumn/convex";
 
 export const autumn = new Autumn(components.autumn, {
+	apiKey: process.env.AUTUMN_SECRET_KEY ?? "",
 	identify: async (ctx: any) => {
 		let user = await ctx.auth.getUserIdentity();
 
-		if (!user) {
-			return null;
-		}
+		if (!user) return null
 
 		return {
 			customerId: user.subject as string,
@@ -73,13 +72,10 @@ export const autumn = new Autumn(components.autumn, {
 			},
 		};
 	},
-	apiKey: process.env.AUTUMN_SECRET_KEY ?? "",
 });
 
 /**
- * Unfortunately for now, you will need to explicitly name
- * and export all of these functions, for now you may simply
- * copy paste this file and forget about it.
+ * These exports are required for our react hooks and components
  */
 
 export const {
@@ -105,17 +101,137 @@ export const {
 } = autumn.api();
 ```
 
-In the `identify()` function, you may need to change user.subject to user.id, depending on your specific auth provider.
-You may also parse any Organisation-level data should you with from the user's Convex Identity. This can help you with
+<Note>
+The `identify()` function determines which customer is making the request. You may customise it based on your use case. For example, if organizations are your customers, you should return an organization ID as `customerId`. This can help you with
 [entity billing](/features/feature-entities).
+</Note>
 
-## 3. Setting up your frontend
+<Warning>
+In the `identify()` function, you may need to change `user.subject` to `user.id` depending on your auth provider.
+</Warning>
 
-If you have used autumn-js before, this should be very familiar for you. The code is almost identical,
-you just need to pass in some Convex-specific props to your `<AutumnProvider />`. Below are examples using Clerk and Better Auth for authentication.
-You may simply copy this into your codebase.
+
+
+#### 5. Setting up \<AutumnProvider/> on your frontend
+
+This allows your React app to make use of our hooks and components. To do this, add the following to a file `AutumnWrapper.tsx`:
 
 <CodeGroup>
+```typescript 
+import { AutumnProvider } from "autumn-js/react";
+import { api } from "../convex/_generated/api";
+import { useConvex } from "convex/react";
+
+export function AutumnWrapper({ children }: { children: React.ReactNode }) {
+  const convex = useConvex();
+
+  return (
+    <AutumnProvider convex={convex} convexApi={(api as any).autumn}>
+      {children}
+    </AutumnProvider>
+  );
+}
+```
+</CodeGroup>
+
+<Note>
+If you're using Autumn purely on the backend, you may skip this step.
+</Note>
+
+
+## Using Autumn hooks and components on the frontend
+
+`<PricingTable/>`
+
+The quickest way to get started is to use our \<PricingTable/> component:
+
+```typescript src/app/page.tsx [expandable] wrap
+import { PricingTable } from "autumn-js/react";
+
+export default function Home() {
+  return (
+    <PricingTable/>
+  );
+}
+```
+
+<Note>
+Our components can be downloaded as shadcn components and are fully customizable. You can learn how to do so [here](http://localhost:3000/setup/shadcn)
+</Note>
+
+`useCustomer`
+
+We also provide a `useCustomer` hook which lets you easily access your customer data and interact with the Autumn API directly from your frontend. For example, to upgrade a user:
+
+```typescript src/app/page.tsx [expandable] wrap
+import { useCustomer, CheckoutDialog } from "autumn-js/react";
+
+export default function Home() {
+  const { customer, track, check, checkout } = useCustomer();
+  return (
+    <button onClick={() =>
+        checkout({
+          productId: "pro",
+          dialog: CheckoutDialog,
+        })
+      }>
+      Upgrade to Pro
+    </button>
+  );
+}
+```
+
+You can use all of the `useCustomer()` and `useEntity()` features as you would normally. If you aren't familiar with these,
+you can read more about them [here](/api-reference/hooks/useCustomer).
+
+## Using Autumn on the backend
+
+You will also need to use Autumn on your backend for actions such as tracking or gating usage of a feature. To do so, you can use our Autumn client:
+
+#### Check feature access
+```typescript
+import { autumn } from "convex/autumn";
+
+const { data, error } = await autumn.check(ctx, {
+	featureId: "messages"
+});
+
+if (data.allowed) {
+	// Action to perform if user is allowed messages
+}
+```
+
+#### Track feature usage
+```typescript
+import { autumn } from "convex/autumn";
+
+const { data, error } = await autumn.track(ctx, {
+	featureId: "messages",
+	value: 10
+});
+```
+
+<Note>
+These are the most common functions you'll be using, but we also export all other functions in out JS SDK / API reference, for eg:
+- `checkout`
+- `attach`
+And more!
+
+Check out our API reference [here](http://localhost:3001/api-reference/core/checkout)
+</Note>
+
+**Congrats 🎉**
+
+Nice! You've now integrated Autumn into your application with Convex.
+
+Next steps:
+
+- Learn how to make [credits-based](/guides/credits) pricing models with Autumn
+- Learn how to make [prepaid](/guides/prepaid) pricing models with Autumn
+
+
+
+{/* <CodeGroup>
 ```typescript Clerk [expandable] wrap
 import { AutumnProvider } from "autumn-js";
 import { api } from "../convex/_generated/api";
@@ -210,9 +326,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
-</CodeGroup>
+</CodeGroup> */}
 
-As you can see, the main difference is that we need to pass in these three props to the `<AutumnProvider />`:
+{/* If you have used autumn-js before, this should be very familiar for you. The code is almost identical,
+you just need to pass in some Convex-specific props to your `<AutumnProvider />`. Below are examples using Clerk and Better Auth for authentication.
+You may simply copy this into your codebase. */}
+{/* As you can see, the main difference is that we need to pass in these three props to the `<AutumnProvider />`:
 
 - `convexApi` - The Convex API object from your `convex/_generated/api.ts` file.
 
@@ -230,51 +349,4 @@ but it works with any auth provider that Convex supports.
 Here are the relevant docs for other common auth providers:
 
 - [Convex Auth](https://labs.convex.dev/auth/api_reference/react#useauthtoken)
-- [Kinde Auth](https://docs.kinde.com/developer-tools/sdks/frontend/react-sdk/#gettoken)
-
-## 4. Using the frontend API
-
-Again, if you have used autumn-js before, this should be very familiar for you. You can simply use the API as you would normally.
-
-```typescript src/app/page.tsx [expandable] wrap
-import { useCustomer } from "autumn-js/react";
-
-const { customer, track, check, checkout } = useCustomer();
-```
-
-You can use all of the `useCustomer()` and `useEntity()` features as you would normally. If you aren't familiar with these,
-you can read more about them [here](/api-reference/hooks/useCustomer).
-
-## 5. Using the backend API
-
-The Convex backend SDK also mirrors the functionality of the original `autumn-js` SDK. However the special part is, we handle identification for you. All you need to do is
-call the function, and we will parse customer_id and customer_data for you.
-
-```typescript convex/cool.ts [expandable] wrap
-import { action } from "./_generated/server";
-import { api } from "./_generated/api";
-import { v } from "convex/values";
-import autumn from "./autumn";
-
-export const mySuperCoolAction = action({
-	args: {},
-	handler: async (ctx, _) => {
-		let { data, error } = await autumn.check(ctx, { feature_id: "cool_credits" });
-        if(!error && data.allowed) {
-            await ctx.db.runMutation(api.superSecretCoolMutation);
-            return "You are super cool!";
-        } else {
-            return "You are not allowed to do this";
-        }
-	},
-});
-```
-
-**Congrats 🎉**
-
-Nice! You've now integrated Autumn into your application with Convex.
-
-Next steps:
-
-- Learn how to make [credits-based](/guides/credits) pricing models with Autumn
-- Learn how to make [prepaid](/guides/prepaid) pricing models with Autumn
+- [Kinde Auth](https://docs.kinde.com/developer-tools/sdks/frontend/react-sdk/#gettoken) */}
