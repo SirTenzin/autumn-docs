@@ -53,15 +53,59 @@ export default app;
 
 Paste the following code into `convex/autumn.ts`
 
-```typescript convex/autumn.ts [expandable] wrap
+<CodeGroup>
+```typescript Convex Auth
 import { components } from "./_generated/api";
 import { Autumn } from "@useautumn/convex";
 
 export const autumn = new Autumn(components.autumn, {
 	apiKey: process.env.AUTUMN_SECRET_KEY ?? "",
 	identify: async (ctx: any) => {
-		let user = await ctx.auth.getUserIdentity();
+		const user = await ctx.auth.getUserIdentity();
+		if (!user) return null;
 
+		const userId = user.subject.split("|")[0];
+		return {
+			customerId: user.subject as string,
+			customerData: {
+				name: user.name as string,
+				email: user.email as string,
+			},
+		};
+	},
+});
+
+/**
+ * These exports are required for our react hooks and components
+ */
+
+export const {
+  track,
+  cancel,
+  query,
+  attach,
+  check,
+  checkout,
+  usage,
+  setupPayment,
+  createCustomer,
+  listProducts,
+  billingPortal,
+  createReferralCode,
+  redeemReferralCode,
+  createEntity,
+  getEntity,
+} = autumn.api();
+```
+
+```typescript Better Auth
+import { components } from "./_generated/api";
+import { Autumn } from "@useautumn/convex";
+
+export const autumn = new Autumn(components.autumn, {
+	secretKey: process.env.AUTUMN_SECRET_KEY ?? "",
+	identify: async (ctx: any) => {
+		let user = await ctx.auth.getUserIdentity();
 		if (!user) return null
 
 		return {
@@ -96,6 +140,7 @@ export const {
   getEntity,
 } = autumn.api();
 ```
+</CodeGroup>
 
 <Note>
 The `identify()` function determines which customer is making the request. You may customise it based on your use case. For example, if organizations are your customers, you should return an organization ID as `customerId`. This can help you with
@@ -152,7 +197,7 @@ export default function Home() {
 ```
 
 <Note>
-Our components can be downloaded as shadcn components and are fully customizable. You can learn how to do so [here](http://localhost:3000/setup/shadcn)
+Our components can be downloaded as shadcn components and are fully customizable. You can learn how to do so [here](https://docs.useautumn.com/setup/shadcn)
 </Note>
 
 `useCustomer`
@@ -213,7 +258,7 @@ These are the most common functions you'll be using, but we also export all othe
 - `attach`
 And more!
 
-Check out our API reference [here](http://localhost:3001/api-reference/core/checkout)
+Check out our API reference [here](https://docs.useautumn.com/api-reference/core/checkout)
 </Note>
 
 **Congrats 🎉**
