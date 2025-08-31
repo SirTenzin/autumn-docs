@@ -201,7 +201,49 @@ paths:
                 $ref: "#/components/schemas/Customer"
               example:
                 $ref: "#/components/examples/CustomerResponse/value"
+    delete:
+      security:
+        - secretKeyAuth: []
+      summary: Delete a customer
+      description: Delete a customer
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Your unique identifier for the customer
+        - name: delete_in_stripe
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Also delete the linked Stripe customer
+      x-code-samples:
+        - lang: typescript
+          source: |
+            import { Autumn as autumn } from 'autumn-js';
 
+            const { data } = await autumn.customers.delete('user_123', {
+              delete_in_stripe: true
+            });
+
+        - lang: curl
+          source: |
+            curl -X DELETE 'https://api.useautumn.com/v1/customers/user_123?delete_in_stripe=true' \
+            -H 'Authorization: Bearer am_sk_1234567890'
+
+
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+              example:
+                $ref: "#/components/examples/CustomerResponse/value"
 components:
   examples:
     CustomerResponse:
