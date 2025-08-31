@@ -122,10 +122,6 @@
 							"api-reference/products/referral-redeem",
 							"api-reference/products/cancel"
 						]
-					},
-					{
-						"group": "Batch API",
-						"pages": ["api-reference/batch/customers/post"]
 					}
 				]
 			}
