@@ -11,6 +11,62 @@ security:
   - bearerAuth: [Authorization]
 paths:
   /customers:
+    get:
+      security:
+        - secretKeyAuth: []
+      summary: List customers
+      description: Retrieve a paginated list of customers
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 100
+            default: 10
+          description: Maximum number of customers to return
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of customers to skip before returning results
+      x-code-samples:
+        - lang: typescript
+          source: |
+            import { Autumn as autumn } from 'autumn-js';
+
+            const { data } = await autumn.customers.list({ limit: 10, offset: 0 });
+
+        - lang: curl
+          source: |
+            curl 'https://api.useautumn.com/v1/customers?limit=10&offset=0' \
+            -H 'Authorization: Bearer am_sk_1234567890'
+
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  list:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Customer"
+                  total:
+                    type: integer
+                    description: Total number of customers available
+                  limit:
+                    type: integer
+                    description: Maximum number of customers returned
+                  offset:
+                    type: integer
+                    description: Number of customers skipped before returning results
     post:
       description: Create a new Autumn customer
       requestBody:
@@ -265,7 +321,6 @@ components:
               status: "active",
               started_at: 1677649423000,
               canceled_at: null,
-              subscription_ids: ["sub_123"],
               current_period_start: 1677649423000,
               current_period_end: 1680327823000,
             },
@@ -303,11 +358,6 @@ components:
         canceled_at:
           type: integer
           format: int64
-          nullable: true
-        subscription_ids:
-          type: array
-          items:
-            type: string
           nullable: true
         current_period_start:
           type: integer

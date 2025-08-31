@@ -98,8 +98,9 @@
 					{
 						"group": "Customers",
 						"pages": [
-							"api-reference/customers/post",
 							"api-reference/customers/get",
+							"api-reference/customers/list",
+							"api-reference/customers/post",
 							"api-reference/customers/update",
 							"api-reference/customers/billing-portal",
 							"api-reference/customers/delete"
